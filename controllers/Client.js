@@ -1,4 +1,3 @@
-const { default: mongoose } = require("mongoose");
 const Client = require("../models/Client");
 const ClientService = require("../services/Client");
 module.exports = {
@@ -71,27 +70,54 @@ module.exports = {
   },
   Update: (req, res) => {
     const id = req.params.id;
+    if (!id) {
+      return res.status(400).send({
+        http_code: 400,
+        status: "error",
+        success: false,
+        message: "Invalid body",
+      });
+    }
     const client = new Client({
       name: req.body.name,
     });
-    ClientService.UpdateClient(id, client, (err, httpCode, result) => {
-      if (err) {
-        return res.status(httpCode).send({
-          http_code: httpCode,
+    Client.findById(id)
+      .then((result) => {
+        if (!result) {
+          return res.status(400).send({
+            http_code: 400,
+            status: "error",
+            success: false,
+            message: "Client does not exist.",
+          });
+        }
+        ClientService.UpdateClient(id, client, (err, httpCode, result) => {
+          if (err) {
+            return res.status(httpCode).send({
+              http_code: httpCode,
+              status: "error",
+              success: false,
+              message: err.message || err,
+            });
+          }
+          return res.status(httpCode).send({
+            http_code: httpCode,
+            status: "ok",
+            success: true,
+            message: "Update Client Successfully !!!!!",
+            data: {
+              client: result,
+            },
+          });
+        });
+      })
+      .catch((error) => {
+        return res.status(400).send({
+          http_code: 400,
           status: "error",
           success: false,
-          message: err.message || err,
+          message: error.message || err,
         });
-      }
-      return res.status(httpCode).send({
-        http_code: httpCode,
-        status: "ok",
-        success: true,
-        message: "Update Client Successfully !!!!!",
-        data: {
-          client: result,
-        },
       });
-    });
   },
 };
